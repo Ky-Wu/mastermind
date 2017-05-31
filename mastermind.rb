@@ -1,3 +1,24 @@
+module CodeStuff
+  def code_validate(input)
+    if input.length != 4
+      return false
+    end
+    ['0','7','8','9'].each do |num|
+      if input.include?(num)
+        return false
+      end
+    end
+    true
+  end
+
+  def generate_code
+    code_array = []
+    4.times { code_array.push(rand(1..6).to_s) }
+    code = code_array.join('')
+    return code
+  end
+end
+
 class Mastermind
   attr_accessor :game_mode, :code, :countdown
   include CodeStuff
@@ -9,8 +30,10 @@ class Mastermind
       case game_mode
       when 'guesser'
         @game_mode = 'guesser'
+        break
       when 'codemaker'
         @game_mode = 'codemaker'
+        break
       else
         puts "Select a valid gamemode: Guesser or Codemaker."
       end
@@ -42,36 +65,33 @@ class Mastermind
   end
 
   def code_check(guess)
-    exact_correct = 0
-    half_correct = 0
-    duplicates = 0
-    master_code = @code.split('')
-    guess_array = guess.split('')
-    if master_code == guess_array
+    if guess == @code
       puts "GAME OVER! The code, #{@code}, was solved!"
       game_over
     else
-      guess_array.each do |num|
-        duplicates_counted = false
-        current_index = guess_array.index(num)
-        if num == master_code[current_index]
+      exact_correct = 0
+      half_correct = 0
+      duplicates = 0
+      master_code = @code.split('')
+      guess_array = guess.split('')
+      guess_array.each_with_index do |num, index|
+        if num == master_code[index]
           exact_correct += 1
-        elsif guess.count(num) <= @code.count(num)
+        elsif @code.include?(num)
           half_correct += 1
-        elsif guess.count(num) > @code.count(num)
-          unless duplicates_counted
-            duplicates = guess.count(num) - @code.count(num)
-            #This iteration includes the current digit, hence the -1 tacked on
-            half_correct -= duplicates - 1
-            duplicates_counted = true
-          else
-            half_correct += 1
-          end
+        end
+      end
+      #Check for excess duplicates in the guess
+      1.upto(6) do |num|
+        x = num.to_s
+        if guess_array.count(x) > @code.count(x) and @code.count(x) > 0
+          duplicates = guess_array.count(x) - @code.count(x)
+          half_correct -= duplicates
         end
       end
     end
-    puts "Exactly correct: #{exact_correct.to_s}"
-    puts "Correct digit but wrong position: #{half_correct.to_s}"
+    puts "Exactly correct positions: #{exact_correct.to_s}"
+    puts "Correct digit but wrong positions: #{half_correct.to_s}"
     @countdown -= 1
     if @countdown == 0
       puts "GAME OVER! The bomb exploded! Guess you'll never find out what the code was..."
@@ -119,26 +139,10 @@ class Code
         @code = code
       else
         puts "Enter a valid code! Remember, it must be 6 digits, each from 1-6."
-    end
-  end
-end
-
-module CodeStuff
-  def code_validate(input)
-    if input.length != 4
-      return validity
-    end
-    ['0','7','8','9'].each do |num|
-      if input.include?(num)
-        return false
       end
     end
-    true
   end
 
-  def generate_code
-    code_array = []
-    4.times { code_array.push(rand(1..6).to_s) }
-    return code_array.join('')
-  end
 end
+
+Mastermind.new
