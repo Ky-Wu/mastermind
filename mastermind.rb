@@ -66,7 +66,6 @@ class Mastermind
   end
 
   def player_guesser
-    puts "#{@countdown} guesses remaining."
     puts "Enter your guess now:"
     while guess = gets.chomp.downcase
       if code_validate(guess)
@@ -78,6 +77,7 @@ class Mastermind
   end
 
   def code_check(guess)
+    puts "\n#{@countdown} guesses remaining."
     if guess == @code
       puts "GAME OVER! The code, #{@code}, was solved!"
       game_end
@@ -143,12 +143,11 @@ class Mastermind
 
   def computer_guesser
     guess = @combinations.sample
-    compare ||= code_check(guess)
+    compare = code_check(guess)
     puts "GUESS: #{guess}"
     @combinations.delete_if do |combo|
-      code_tester(combo, guess) != compare
+      code_tester(guess, combo) != compare
     end
-    compare = code_check(guess)
     unless @game_over
       computer_guesser
     end
