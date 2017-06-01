@@ -20,9 +20,22 @@ module CodeStuff
 end
 
 class Mastermind
-  attr_accessor :game_mode, :code, :countdown
+  attr_accessor :game_mode, :code, :countdown, :game_over, :cheats, :combinations
   include CodeStuff
   def initialize
+    @game_over = false
+    # Will be used in computer_guesser
+    @combinations = []
+    1.upto(6) do |num1|
+      1.upto(6) do |num2|
+        1.upto(6) do |num3|
+          1.upto(6) do |num4|
+            possibility = num1.to_s + num2.to_s + num3.to_s + num4.to_s
+            @combinations << possibility
+          end
+        end
+      end
+    end
     @countdown = 12
     puts "Welcome to Mastermind."
     puts "Please choose a gamemode. Guesser or Codemaker?"
@@ -67,7 +80,7 @@ class Mastermind
   def code_check(guess)
     if guess == @code
       puts "GAME OVER! The code, #{@code}, was solved!"
-      game_over
+      game_end
     else
       exact_correct = 0
       half_correct = 0
@@ -95,13 +108,55 @@ class Mastermind
     @countdown -= 1
     if @countdown == 0
       puts "GAME OVER! The bomb exploded! Guess you'll never find out what the code was..."
-      game_over
-    else
+      game_end
+    elsif @game_mode == 'guesser'
       player_guesser
+    else
+      return [exact_correct, half_correct]
     end
   end
 
-  def game_over
+  def code_tester(guess, possible_answer)
+    exact_correct = 0
+    half_correct = 0
+    duplicates = 0
+    master_code = possible_answer.split('')
+    guess_array = guess.split('')
+    guess_array.each_with_index do |num, index|
+      if num == master_code[index]
+        exact_correct += 1
+      elsif possible_answer.include?(num)
+        half_correct += 1
+      end
+    end
+    #Check for excess duplicates in the guess
+    1.upto(6) do |num|
+      x = num.to_s
+      if guess_array.count(x) > possible_answer.count(x) and possible_answer.count(x) > 0
+        duplicates = guess_array.count(x) - possible_answer.count(x)
+        half_correct -= duplicates
+      end
+    end
+    [exact_correct, half_correct]
+  end
+
+
+  def computer_guesser
+    guess = @combinations.sample
+    compare ||= code_check(guess)
+    puts "GUESS: #{guess}"
+    @combinations.delete_if do |combo|
+      code_tester(combo, guess) != compare
+    end
+    compare = code_check(guess)
+    unless @game_over
+      computer_guesser
+    end
+
+  end
+
+  def game_end
+    @game_over = true
     puts "Do you want to start a new game? [Yes/No]"
     while choice = gets.chomp.downcase
       case choice
@@ -110,6 +165,7 @@ class Mastermind
         break
       when 'no'
         puts "Well this is it then. Nice knowing you, pal. See ya around."
+        exit
         break
       else
         puts "Please pick 'Yes' or 'No.'"
@@ -137,6 +193,7 @@ class Code
     while code = gets.chomp
       if code_validate(code)
         @code = code
+        break
       else
         puts "Enter a valid code! Remember, it must be 6 digits, each from 1-6."
       end
